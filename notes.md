@@ -12,7 +12,7 @@ As part of `Deliverable ⓵ Development deployment: JWT Pizza`, start up the app
 | Order pizza                                         | menu.tsx <br/>payment.tsx| [GET]/api/order/menu <br/>[GET]/api/franchise <br/>[GET]/api/user/me <br/>[POST]/api/order| `SELECT * FROM menu` <br/>`SELECT id, name FROM franchise WHERE name LIKE ? LIMIT ${limit + 1} OFFSET ${offset}` <br/>`SELECT id, name FROM store WHERE franchiseId=?` <br/>`SELECT userId FROM auth WHERE token=?` <br/>`INSERT INTO dinerOrder (dinerId, franchiseId, storeId, date) VALUES (?, ?, ?, now())` <br/>`INSERT INTO orderItem (orderId, menuId, description, price) VALUES (?, ?, ?, ?)`|
 | Verify pizza                                        | delivery.tsx       | none              | none         |
 | View profile page                                   | dinerDashboard.tsx | [GET]/api/order    | `SELECT userId FROM auth WHERE token=?` <br/>`SELECT id, franchiseId, storeId, date FROM dinerOrder WHERE dinerId=? LIMIT ${offset},${config.db.listPerPage}` <br/>`SELECT id, menuId, description, price FROM orderItem WHERE orderId=?`|
-| View franchise<br/>(as diner)                       |                    |                   |              |
+| View franchise<br/>(as diner)                       | franchiseDashboard.tsx| [GET]/api/franchise/:userId| `SELECT userId FROM auth WHERE token=?` <br/>`SELECT objectId FROM userRole WHERE role='franchisee' AND userId=?`|
 | Logout                                              |                    |                   |              |
 | View About page                                     |                    |                   |              |
 | View History page                                   |                    |                   |              |
