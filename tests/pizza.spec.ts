@@ -127,3 +127,15 @@ test('purchase with login', async ({ page }) => {
   // Check balance
   await expect(page.getByText('0.008')).toBeVisible();
 });
+
+test('history and about pages', async ({ page }) => {
+    await basicInit(page);
+
+    // Go to history page
+    await page.getByRole('link', { name: 'History' }).click();
+    await expect(page.getByRole('heading')).toContainText('Mama Rucci, my my');
+
+    // Go to about page
+    await page.getByRole('link', { name: 'About' }).click();
+    await expect(page.getByRole('main')).toContainText('The secret sauce');
+});
