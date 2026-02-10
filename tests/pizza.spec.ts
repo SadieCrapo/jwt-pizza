@@ -8,19 +8,34 @@ async function basicInit(page: Page) {
 
   // Authorize login for the given user
   await page.route('*/**/api/auth', async (route) => {
-    const loginReq = route.request().postDataJSON();
-    const user = validUsers[loginReq.email];
-    if (!user || user.password !== loginReq.password) {
-      await route.fulfill({ status: 401, json: { error: 'Unauthorized' } });
-      return;
+    const authReq = route.request().postDataJSON();
+    let authRes;
+    switch(route.request().method()) {
+        case 'PUT': {
+            const user = validUsers[authReq.email];
+            if (!user || user.password !== authReq.password) {
+                await route.fulfill({ status: 401, json: { error: 'Unauthorized' } });
+                return;
+            }
+            loggedInUser = validUsers[authReq.email];
+            authRes = {
+                user: loggedInUser,
+                token: 'abcdef',
+            };
+            break;
+        }
+        case 'POST': {
+            authRes = {
+                user: { id: '4', name: authReq.name, email: authReq.email, password: authReq.password, roles: [{ role: Role.Diner }] },
+                token: 'abcdef',
+            };
+            break;
+        }
+        default: {
+            expect(route.request().method()).toBe('PUT');
+        }
     }
-    loggedInUser = validUsers[loginReq.email];
-    const loginRes = {
-      user: loggedInUser,
-      token: 'abcdef',
-    };
-    expect(route.request().method()).toBe('PUT');
-    await route.fulfill({ json: loginRes });
+    await route.fulfill({ json: authRes });
   });
 
   // Return the currently logged in user
@@ -75,19 +90,56 @@ async function basicInit(page: Page) {
   // Order a pizza.
   await page.route('*/**/api/order', async (route) => {
     const orderReq = route.request().postDataJSON();
-    const orderRes = {
-      order: { ...orderReq, id: 23 },
-      jwt: 'eyJpYXQ',
-    };
-    expect(route.request().method()).toBe('POST');
+    let orderRes;
+    switch(route.request().method()) {
+        case 'POST': {
+            orderRes = {
+                order: { ...orderReq, id: 23 },
+                jwt: 'eyJpYXQ',
+            };
+            break;
+        }
+        case 'GET': {
+            orderRes = {
+                id: '1',
+                dinerId: '4',
+                orders: []
+            };
+            break;
+        }
+        default: {
+            expect(route.request().method()).toBe('POST');
+            break;
+        }
+    }
     await route.fulfill({ json: orderRes });
   });
 
   await page.goto('http://localhost:5173');
 }
 
+test('register', async ({ page }) => {
+    await basicInit(page);
+
+    await page.getByRole('link', { name: 'Register' }).click();
+    await expect(page.getByRole('heading')).toContainText('Welcome to the party');
+    await page.getByRole('textbox', { name: 'Full name' }).click();
+    await page.getByRole('textbox', { name: 'Full name' }).fill('Test User');
+    await page.getByRole('textbox', { name: 'Full name' }).press('Tab');
+    await page.getByRole('textbox', { name: 'Email address' }).fill('t@jwt.com');
+    await page.getByRole('textbox', { name: 'Email address' }).press('Tab');
+    await page.getByRole('textbox', { name: 'Password' }).fill('t');
+    await page.getByRole('button', { name: 'Register' }).click();
+    await expect(page.getByRole('heading')).toContainText('The web\'s best pizza');
+    await page.getByRole('link', { name: 'TU' }).click();
+    await expect(page.getByRole('main')).toContainText('Test User');
+    await expect(page.getByRole('main')).toContainText('t@jwt.com');
+    await expect(page.getByRole('main')).toContainText('diner');
+});
+
 test('login', async ({ page }) => {
   await basicInit(page);
+
   await page.getByRole('link', { name: 'Login' }).click();
   await page.getByRole('textbox', { name: 'Email address' }).fill('d@jwt.com');
   await page.getByRole('textbox', { name: 'Password' }).fill('a');
