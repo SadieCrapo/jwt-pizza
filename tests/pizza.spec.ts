@@ -32,6 +32,9 @@ async function basicInit(page: Page) {
                 };
                 break;
             }
+            case 'DELETE': {
+                break;
+            }
             default: {
                 expect(route.request().method()).toBe('PUT');
             }
@@ -151,6 +154,25 @@ test('login', async ({ page }) => {
     await page.getByRole('button', { name: 'Login' }).click();
 
     await expect(page.getByRole('link', { name: 'KC' })).toBeVisible();
+});
+
+test('logout', async ({ page }) => {
+    await basicInit(page);
+
+    await page.getByRole('link', { name: 'Login' }).click();
+    await page.getByRole('textbox', { name: 'Email address' }).fill('d@jwt.com');
+    await page.getByRole('textbox', { name: 'Password' }).fill('a');
+    await page.getByRole('button', { name: 'Login' }).click();
+
+    await expect(page.getByRole('link', { name: 'KC' })).toBeVisible();
+    await expect(page.getByRole('link', { name: 'Logout' })).toBeVisible();
+    await expect(page.getByRole('link', { name: 'Login' })).toBeHidden();
+    await expect(page.getByRole('link', { name: 'Register' })).toBeHidden();
+
+    await page.getByRole('link', { name: 'Logout' }).click();
+    await expect(page.getByRole('link', { name: 'Login' })).toBeVisible();
+    await expect(page.getByRole('link', { name: 'Register' })).toBeVisible();
+    await expect(page.getByRole('link', { name: 'Logout' })).toBeHidden();
 });
 
 test('purchase with login', async ({ page }) => {
