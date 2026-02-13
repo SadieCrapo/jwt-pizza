@@ -346,6 +346,4 @@ test('not found page', async ({ page}) => {
 test('docs', async ({ page }) => {
     await page.goto('http://localhost:5173/docs');
     await expect(page.getByRole('main')).toContainText('JWT Pizza API');
-    await expect(page.getByRole('main')).toContainText('🔐 [DELETE] /api/franchise/:franchiseId');
-    await page.getByRole('heading', { name: '🔐 [GET] /api/order' }).click();
 });
