@@ -335,3 +335,17 @@ test('history and about pages', async ({ page }) => {
     await page.getByRole('link', { name: 'About' }).click();
     await expect(page.getByRole('main')).toContainText('The secret sauce');
 });
+
+test('not found page', async ({ page}) => {
+    await page.goto('http://localhost:5173/d');
+
+    await expect(page.getByRole('heading')).toContainText('Oops');
+    await expect(page.getByRole('main')).toContainText('It looks like we have dropped a pizza on the floor. Please try another page.');
+});
+
+test('docs', async ({ page }) => {
+    await page.goto('http://localhost:5173/docs');
+    await expect(page.getByRole('main')).toContainText('JWT Pizza API');
+    await expect(page.getByRole('main')).toContainText('🔐 [DELETE] /api/franchise/:franchiseId');
+    await page.getByRole('heading', { name: '🔐 [GET] /api/order' }).click();
+});
