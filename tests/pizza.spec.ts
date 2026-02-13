@@ -4,7 +4,7 @@ import { User, Role } from '../src/service/pizzaService';
 
 async function basicInit(page: Page, valid: string = 'valid') {
     let loggedInUser: User | undefined;
-    const validUsers: Record<string, User> = { 'd@jwt.com': { id: '3', name: 'Kai Chen', email: 'd@jwt.com', password: 'a', roles: [{ role: Role.Diner }] }, 'a@jwt.com': { id: '2', name: 'Admin User', email: 'a@jwt.com', password: 'admin', roles: [{ role: Role.Admin }] } };
+    const validUsers: Record<string, User> = { 'd@jwt.com': { id: '3', name: 'Kai Chen', email: 'd@jwt.com', password: 'a', roles: [{ role: Role.Diner }] }, 'a@jwt.com': { id: '2', name: 'Admin User', email: 'a@jwt.com', password: 'admin', roles: [{ role: Role.Admin }] }, 'f@jwt.com': { id: '1', name: 'Franchise User', email: 'f@jwt.com', password: 'franchise', roles: [{ role: Role.Diner }, { role: Role.Franchisee }] } };
     const validFranchises = [{ id: 2, name: 'LotaPizza', stores: [{ id: 4, name: 'Lehi' }, { id: 5, name: 'Springville' }, { id: 6, name: 'American Fork' },], }, { id: 3, name: 'PizzaCorp', stores: [{ id: 7, name: 'Spanish Fork' }] }, { id: 4, name: 'topSpot', stores: [] }];
 
     // Authorize login for the given user
@@ -89,8 +89,12 @@ async function basicInit(page: Page, valid: string = 'valid') {
                 break;
             }
             case 'POST': {
-                franchiseRes = { ...franchiseReq, id: '1' };
+                franchiseRes = { ...franchiseReq, id: '5' };
                 validFranchises.push(franchiseRes);
+                break;
+            }
+            case 'DELETE': {
+                validFranchises.pop();
                 break;
             }
             default: {
@@ -285,7 +289,7 @@ test('purchase with invalid jwt', async ({ page }) => {
 });
 
 test('create franchise', async ({ page }) => {
-    await basicInit(page);
+    await basicInit(page, 'invalid');
 
     // Go to login page
     await expect(page.getByRole('heading')).toContainText('The web\'s best pizza');
@@ -315,6 +319,9 @@ test('create franchise', async ({ page }) => {
     await page.getByRole('button', { name: 'Create' }).click();
     await expect(page.locator('h2')).toContainText('Mama Ricci\'s kitchen');
     await expect(page.getByRole('table')).toContainText('The Newest Franchise');
+    await page.getByRole('row', { name: 'The Newest Franchise Close' }).getByRole('button').click();
+    await expect(page.getByRole('heading')).toContainText('Sorry to see you go');
+    await page.getByRole('button', { name: 'Close' }).click();
 });
 
 test('history and about pages', async ({ page }) => {
