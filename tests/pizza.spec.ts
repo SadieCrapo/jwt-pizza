@@ -6,7 +6,9 @@ async function basicInit(page: Page, valid: string = 'valid') {
     let loggedInUser: User | undefined;
     const validUsers: Record<string, User> = { 'd@jwt.com': { id: '3', name: 'Kai Chen', email: 'd@jwt.com', password: 'a', roles: [{ role: Role.Diner }] }, 'a@jwt.com': { id: '2', name: 'Admin User', email: 'a@jwt.com', password: 'admin', roles: [{ role: Role.Admin }] }, 'f@jwt.com': { id: '1', name: 'Franchise User', email: 'f@jwt.com', password: 'franchise', roles: [{ role: Role.Diner }, { role: Role.Franchisee }] } };
     const validFranchises = [{ id: 2, name: 'LotaPizza', stores: [{ id: 4, name: 'Lehi' }, { id: 5, name: 'Springville' }, { id: 6, name: 'American Fork' },], }, { id: 3, name: 'PizzaCorp', stores: [{ id: 7, name: 'Spanish Fork' }] }, { id: 4, name: 'topSpot', stores: [] }];
-
+    let jwtMessage;
+    // let valid = true;
+    let franchisePage = 0;
     // Authorize login for the given user
     await page.route('*/**/api/auth', async (route) => {
         const authReq = route.request().postDataJSON();
@@ -83,9 +85,13 @@ async function basicInit(page: Page, valid: string = 'valid') {
         let franchiseRes;
         switch (route.request().method()) {
             case 'GET': {
+                // let franchises = validFranchises.slice((3 * franchisePage), ((3 * franchisePage) + 3))
                 franchiseRes = {
                     franchises: validFranchises
                 };
+                // if (validFranchises.length > 3) {
+                //     franchisePage++;
+                // }
                 break;
             }
             case 'POST': {
@@ -318,11 +324,44 @@ test('create franchise', async ({ page }) => {
     await page.getByRole('textbox', { name: 'franchisee admin email' }).fill('a@jwt.com');
     await page.getByRole('button', { name: 'Create' }).click();
     await expect(page.locator('h2')).toContainText('Mama Ricci\'s kitchen');
+    // await expect(page.getByRole('table')).not.toContainText('The Newest Franchise');
+    // await page.waitForTimeout(10000);
+    // await page.getByRole('button', { name: '»' }).click();
     await expect(page.getByRole('table')).toContainText('The Newest Franchise');
     await page.getByRole('row', { name: 'The Newest Franchise Close' }).getByRole('button').click();
     await expect(page.getByRole('heading')).toContainText('Sorry to see you go');
     await page.getByRole('button', { name: 'Close' }).click();
 });
+
+// test('create store', async ({ page }) => {
+//     await basicInit(page);
+
+//     // Go to login page
+//     await expect(page.getByRole('heading')).toContainText('The web\'s best pizza');
+//     await page.getByRole('link', { name: 'Login' }).click();
+//     await expect(page.getByRole('heading')).toContainText('Welcome back');
+
+//     // Login
+//     await page.getByRole('textbox', { name: 'Email address' }).click();
+//     await page.getByRole('textbox', { name: 'Email address' }).fill('f@jwt.com');
+//     await page.getByRole('textbox', { name: 'Email address' }).press('Tab');
+//     await page.getByRole('textbox', { name: 'Password' }).fill('franchise');
+//     await page.getByRole('button', { name: 'Login' }).click();
+
+//     await page.getByLabel('Global').getByRole('link', { name: 'Franchise' }).click();
+//     // await page.getByLabel('Global').getByRole('link', { name: 'Franchise' }).click();
+//     // await page.getByRole('link', { name: 'Franchise' }).click();
+//     await expect(page.getByRole('main')).toContainText('Everything you need to run an JWT Pizza franchise. Your gateway to success.');
+//     await page.getByRole('button', { name: 'Create store' }).click();
+//     await expect(page.getByRole('heading')).toContainText('Create store');
+//     await page.getByRole('textbox', { name: 'store name' }).click();
+//     await page.getByRole('textbox', { name: 'store name' }).fill('the newest store');
+//     await page.getByRole('button', { name: 'Create' }).click();
+//     await expect(page.getByRole('cell', { name: 'the newest store' })).toContainText('the newest store');
+//     await page.getByRole('row', { name: 'the newest store 0 ₿ Close' }).getByRole('button').click();
+//     await expect(page.getByRole('heading')).toContainText('Sorry to see you go');
+//     await page.getByRole('button', { name: 'Close' }).click();
+// });
 
 test('history and about pages', async ({ page }) => {
     await basicInit(page);
