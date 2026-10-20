@@ -25,8 +25,18 @@ async function basicInit(page: Page, valid: string = 'valid') {
                 break;
             }
             case 'POST': {
+                const newUser: User = {
+                    id: '4',
+                    name: authReq.name,
+                    email: authReq.email,
+                    password: authReq.password,
+                    roles: [{ role: Role.Diner }],
+                };
+                validUsers[authReq.email] = newUser;
+                loggedInUser = newUser;
                 authRes = {
-                    user: { id: '4', name: authReq.name, email: authReq.email, password: authReq.password, roles: [{ role: Role.Diner }] },
+                    user: loggedInUser,
+                    // user: { id: '4', name: authReq.name, email: authReq.email, password: authReq.password, roles: [{ role: Role.Diner }] },
                     token: 'abcdef',
                 };
                 break;
@@ -47,6 +57,28 @@ async function basicInit(page: Page, valid: string = 'valid') {
         await route.fulfill({ json: loggedInUser });
     });
 
+    await page.route(/\/api\/user\/\d+$/, async (route) => {
+        const req = route.request();
+        switch (req.method()) {
+            case 'PUT': {
+                const updateReq = req.postDataJSON();
+                loggedInUser = { ...loggedInUser, ...updateReq };
+                if (loggedInUser?.email) {
+                    validUsers[loggedInUser.email] = loggedInUser;
+                }
+                await route.fulfill({ json: { user: loggedInUser, token: 'abcdef' } });
+                break;
+            }
+            case 'DELETE': {
+                await route.fulfill({ json: { message: 'user deleted' } });
+                break;
+            }
+            default: {
+                expect(req.method()).toBe('PUT');
+            }
+        }
+    });
+
     await page.route(/\/api\/user(\?.*)?$/, async (route) => {
         const userRes = { users: Object.values(validUsers), more: false };
         expect(route.request().method()).toBe('GET');
@@ -59,7 +91,8 @@ async function basicInit(page: Page, valid: string = 'valid') {
 
 test('updateUser', async ({ page }) => {
   const email = `user${Math.floor(Math.random() * 10000)}@jwt.com`;
-  await page.goto('http://localhost:5173');
+  await basicInit(page);
+  
   await page.getByRole('link', { name: 'Register' }).click();
   await page.getByRole('textbox', { name: 'Full name' }).fill('pizza diner');
   await page.getByRole('textbox', { name: 'Email address' }).fill(email);
